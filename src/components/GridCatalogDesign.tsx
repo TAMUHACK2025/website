@@ -4,9 +4,34 @@ import { Badge } from "./ui/badge";
 import { Card } from "./ui/card";
 import { Search, ExternalLink, Disc3, Disc, CassetteTape } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { useCallback, useState } from "react";
+import { apiClient } from "@/lib/api/client";
+import { DiscogsSearchResponse, DiscogsSearchResult } from "@/lib/types/api.types";
 
 export function GridCatalogDesign() {
-  const albums = [
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<DiscogsSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await apiClient<DiscogsSearchResponse>(`/api/discogs/search?q=${encodeURIComponent(query)}`);
+      setSearchResults(response.results);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  // Static albums as fallback
+  const staticAlbums = [
     { 
       title: "Random Access Memories", 
       artist: "Daft Punk", 
@@ -82,6 +107,13 @@ export function GridCatalogDesign() {
             <Input 
               placeholder="search_albums()" 
               className="bg-zinc-900 border-zinc-800 pl-10 font-mono text-zinc-300 placeholder:text-zinc-600"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch(searchQuery);
+                }
+              }}
             />
           </div>
         </div>
@@ -90,61 +122,88 @@ export function GridCatalogDesign() {
       {/* Grid */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-6">
-          <p className="text-zinc-500 text-sm">// Found {albums.length} albums in library</p>
+          <p className="text-zinc-500 text-sm">
+            // Found {searchResults.length || staticAlbums.length} albums {searchResults.length ? 'in search' : 'in library'}
+          </p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {albums.map((album, idx) => (
+          {(searchResults.length > 0 ? searchResults : staticAlbums).map((album, idx) => (
             <Card key={idx} className="bg-zinc-900 border-zinc-800 overflow-hidden hover:border-zinc-700 transition-colors">
               <div className="aspect-square relative overflow-hidden bg-zinc-800">
                 <ImageWithFallback 
-                  src={album.image} 
+                  src={'image' in album ? album.image : album.cover_image} 
                   alt={album.title}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-2 right-2">
                   <Badge variant="secondary" className="bg-black/70 text-white border-zinc-700 font-mono text-xs">
-                    {album.year}
+                    {'year' in album ? album.year : album.year || 'N/A'}
                   </Badge>
                 </div>
               </div>
               <div className="p-4">
                 <h3 className="mb-1 truncate">{album.title}</h3>
-                <p className="text-sm text-zinc-500 mb-4 truncate">{album.artist}</p>
+                <p className="text-sm text-zinc-500 mb-4 truncate">
+                  {/* Only show artist for static albums */}
+                  {'artist' in album ? album.artist : ''}
+                </p>
                 
                 <div className="space-y-2">
-                  <button 
-                    disabled={!album.vinyl.available}
-                    className="w-full flex items-center justify-between p-2 bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Disc3 size={14} />
-                      <span className="text-sm">vinyl</span>
-                    </div>
-                    <span className="text-sm">${album.vinyl.price}</span>
-                  </button>
+                  {/* Show format buttons only for static albums */}
+                  {'vinyl' in album && (
+                    <button 
+                      disabled={!album.vinyl.available}
+                      className="w-full flex items-center justify-between p-2 bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Disc3 size={14} />
+                        <span className="text-sm">vinyl</span>
+                      </div>
+                      <span className="text-sm">${album.vinyl.price}</span>
+                    </button>
+                  )}
                   
-                  <button 
-                    disabled={!album.cd.available}
-                    className="w-full flex items-center justify-between p-2 bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Disc size={14} />
-                      <span className="text-sm">cd</span>
-                    </div>
-                    <span className="text-sm">${album.cd.price}</span>
-                  </button>
+                  {'cd' in album && (
+                    <button 
+                      disabled={!album.cd.available}
+                      className="w-full flex items-center justify-between p-2 bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Disc size={14} />
+                        <span className="text-sm">cd</span>
+                      </div>
+                      <span className="text-sm">${album.cd.price}</span>
+                    </button>
+                  )}
                   
-                  <button 
-                    disabled={!album.cassette.available}
-                    className="w-full flex items-center justify-between p-2 bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <CassetteTape size={14} />
-                      <span className="text-sm">cassette</span>
-                    </div>
-                    <span className="text-sm">${album.cassette.price}</span>
-                  </button>
+                  {'cassette' in album && (
+                    <button 
+                      disabled={!album.cassette.available}
+                      className="w-full flex items-center justify-between p-2 bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <CassetteTape size={14} />
+                        <span className="text-sm">cassette</span>
+                      </div>
+                      <span className="text-sm">${album.cassette.price}</span>
+                    </button>
+                  )}
+                  
+                  {/* For search results, show a View on Discogs button */}
+                  {'type' in album && (
+                    <a
+                      href={`https://www.discogs.com/release/${album.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-between p-2 bg-zinc-800 hover:bg-zinc-750 border border-zinc-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ExternalLink size={14} />
+                        <span className="text-sm">View on Discogs</span>
+                      </div>
+                    </a>
+                  )}
                 </div>
               </div>
             </Card>

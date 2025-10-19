@@ -4,7 +4,10 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${API_CONFIG.BASE_URL}${endpoint}`
+  // If the endpoint starts with /api, it's an internal API call
+  const url = endpoint.startsWith('/api') 
+    ? endpoint 
+    : `${API_CONFIG.BASE_URL}${endpoint}`
   
   const response = await fetch(url, {
     ...options,
