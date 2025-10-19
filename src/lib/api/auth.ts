@@ -59,3 +59,8 @@ export const spotifyAuthClient = new SpotifyAuthClient();
 export const handleCallback = async (code: string) => {
   return await spotifyAuthClient.getAccessToken(code);
 };
+
+// Helper to get the authorization URL without reaching into the instance from UI code
+export function getSpotifyAuthUrl() {
+  return spotifyAuthClient.getAuthUrl();
+}
