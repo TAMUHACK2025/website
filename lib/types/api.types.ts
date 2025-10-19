@@ -1,3 +1,10 @@
+export class ApiError extends Error {
+  constructor(message: string, public status: number = 500) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 export interface DiscogsSearchResult {
   id: number
   title: string
