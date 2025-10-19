@@ -29,13 +29,15 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, account }) {
       if (account?.access_token) {
+        // @ts-ignore
         token.accessToken = account.access_token;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token.accessToken) {
-        session.accessToken = token.accessToken;
+      if ((token as any).accessToken) {
+        // @ts-ignore
+        (session as any).accessToken = (token as any).accessToken;
       }
       return session;
     }

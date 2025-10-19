@@ -252,7 +252,7 @@ export function GridCatalogDesign() {
                                 </div>
                                 <Button 
                                   className="w-full bg-green-500/10 hover:bg-green-500/20 text-green-500 mt-2"
-                                  onClick={() => window.open(`https://www.discogs.com/sell/release/${album.id}?format=Vinyl`, '_blank')}
+                                  onClick={() => window.open(`https://www.discogs.com/sell/list?master_id=${album.id}&format=Vinyl`, '_blank')}
                                 >
                                   View Vinyl Listings
                                 </Button>
@@ -286,7 +286,7 @@ export function GridCatalogDesign() {
                                 </div>
                                 <Button 
                                   className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 mt-2"
-                                  onClick={() => window.open(`https://www.discogs.com/sell/release/${album.id}?format=CD`, '_blank')}
+                                  onClick={() => window.open(`https://www.discogs.com/sell/list?master_id=${album.id}&format=CD`, '_blank')}
                                 >
                                   View CD Listings
                                 </Button>
@@ -297,7 +297,7 @@ export function GridCatalogDesign() {
                             
                             <Button 
                               className="w-full bg-zinc-800 hover:bg-zinc-750 group"
-                              onClick={() => window.open(`https://www.discogs.com/release/${album.id}`, '_blank')}
+                              onClick={() => window.open(`https://www.discogs.com/master/${album.id}`, '_blank')}
                             >
                               <ExternalLink className="mr-2 h-4 w-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-200" />
                               View Full Details on Discogs

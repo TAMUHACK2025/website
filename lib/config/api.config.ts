@@ -1,4 +1,4 @@
-const PORT = 8080;
+const PORT = 3000;
 
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.discogs.com',
@@ -11,5 +11,5 @@ export const SPOTIFY_CONFIG = {
   tokenURL: 'https://accounts.spotify.com/api/token',
   redirectURI: process.env.VERCEL_URL 
     ? `https://${process.env.VERCEL_URL}/api/auth/callback`
-    : `http://localhost:${PORT}/api/auth/callback`,
+    : `http://127.0.0.1:${PORT}/api/auth/callback`,
 }
