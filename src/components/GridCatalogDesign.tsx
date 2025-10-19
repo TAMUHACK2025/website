@@ -254,8 +254,10 @@ export function GridCatalogDesign() {
                       <DropdownMenu onOpenChange={async (open) => {
                         if (open && !albumPricing[album.id]) {
                           try {
-                            console.log('Fetching pricing for album:', album.id);
-                            const response = await fetch(`/api/discogs/pricing?releaseId=${album.id}`);
+                            // Try with master_id first, fallback to regular id
+                            const releaseId = album.master_id || album.id;
+                            console.log('Fetching pricing for album:', releaseId);
+                            const response = await fetch(`/api/discogs/pricing?releaseId=${releaseId}`);
                             const data = await response.json();
                             console.log('Received pricing data:', data);
                             if (data.pricing) {
@@ -263,9 +265,42 @@ export function GridCatalogDesign() {
                                 ...prev,
                                 [album.id]: data.pricing
                               }));
+                            } else {
+                              // Set empty pricing on error
+                              setAlbumPricing(prev => ({
+                                ...prev,
+                                [album.id]: {
+                                  vinyl: {
+                                    lowestPrice: { price: '??.??', currency: 'USD' },
+                                    medianPrice: 0,
+                                    available: 0,
+                                  },
+                                  cd: {
+                                    lowestPrice: { price: '??.??', currency: 'USD' },
+                                    medianPrice: 0,
+                                    available: 0,
+                                  }
+                                }
+                              }));
                             }
                           } catch (error) {
                             console.error('Failed to fetch pricing:', error);
+                            // Set empty pricing on error
+                            setAlbumPricing(prev => ({
+                              ...prev,
+                              [album.id]: {
+                                vinyl: {
+                                  lowestPrice: { price: '??.??', currency: 'USD' },
+                                  medianPrice: 0,
+                                  available: 0,
+                                },
+                                cd: {
+                                  lowestPrice: { price: '??.??', currency: 'USD' },
+                                  medianPrice: 0,
+                                  available: 0,
+                                }
+                              }
+                            }));
                           }
                         }
                       }}>
