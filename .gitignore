@@ -1,5 +1,5 @@
-# dependencies
 node_modules
+# dependencies
 /node_modules
 
 # testing
@@ -8,12 +8,10 @@ node_modules
 # production
 /build
 .next/
-.next/cache/
-
-# environment
-.env.local
-*.env.*.local
 
 # misc
 .DS_Store
+*.env.local
+*.env.*.local
 .swc/
+.next/cache/    

@@ -1,53 +1,57 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from 'next/server'
 
-const BASE = "https://api.discogs.com";
-
-export async function GET(req: NextRequest) {
-  const q = req.nextUrl.searchParams.get("q")?.trim();
-  const format = req.nextUrl.searchParams.get("format") || ""; // e.g., "Vinyl" or "CD"
-  if (!q) return new Response(JSON.stringify({ error: "Missing q" }), { status: 400 });
-
-  const params = new URLSearchParams({
-    q,
-    type: "release",          // release, master, artist, label
-    per_page: "12",
-    page: "1",
-  });
-  if (format) params.set("format", format);
-
-  const res = await fetch(`${BASE}/database/search?${params.toString()}`, {
-    headers: {
-      // Both headers below are important:
-      "User-Agent": process.env.DISCOGS_APP_ID || "HackathonMusicFinder/1.0",
-      Authorization: `Discogs token=${process.env.DISCOGS_TOKEN}`,
-    },
-    // no-store so dev results stay fresh
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    return new Response(JSON.stringify({ error: `Discogs error ${res.status}: ${text}` }), { status: 500 });
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams
+  const query = searchParams.get('q')
+  
+  if (!query) {
+    return NextResponse.json({ error: 'Query required' }, { status: 400 })
   }
 
-  const data = await res.json();
-  // normalize a bit for the UI
-  const items = (data.results || []).map((r: any) => ({
-    id: r.id,
-    title: r.title,
-    year: r.year,
-    country: r.country,
-    cover: r.cover_image,
-    format: r.format?.join(", "),
-    catno: r.catno,
-    style: r.style,
-    genre: r.genre,
-    // links we can build easily:
-    discogsWebUrl: r.uri ? `https://www.discogs.com${r.uri}` : undefined,
-    buyDiscogsSearch: `https://www.discogs.com/search/?q=${encodeURIComponent(r.title)}&type=release&format=${encodeURIComponent(format || "Vinyl,CD")}`,
-    buyEbay: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(r.title + " " + (format || ""))}`,
-    buyAmazon: `https://www.amazon.com/s?k=${encodeURIComponent(r.title + " " + (format || ""))}`,
-  }));
+  const token = process.env.DISCOGS_TOKEN
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.discogs.com'
+  
+  // Add sort=want to get most popular releases first, and format=album to focus on main releases
+  // Simple search with artist name
+  const url = `${baseUrl}/database/search?artist=${encodeURIComponent(query)}&format=album&type=master&sort=want&per_page=12`
+  
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Discogs token=${token}`,
+      'User-Agent': 'MyDiscogsApp/1.0',
+    },
+  })
 
-  return Response.json({ items });
+  if (!response.ok) {
+    console.error('Discogs API error:', response.status);
+    return NextResponse.json({ error: 'Failed to fetch from Discogs' }, { status: response.status });
+  }
+
+  const data = await response.json();
+  console.log('Discogs search response:', JSON.stringify(data, null, 2));
+  
+  if (!data.results || data.results.length === 0) {
+    console.log('No results found for query:', query);
+    return NextResponse.json({ results: [] });
+  }
+
+  // Normalize the data and filter out results that don't match the artist
+  const albums = data.results
+    .filter((item: any) => {
+      const itemTitle = item.title.toLowerCase();
+      const searchQuery = query.toLowerCase();
+      return itemTitle.includes(searchQuery) || (item.artist && item.artist.toLowerCase().includes(searchQuery));
+    })
+    .map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      year: item.year?.toString() || 'N/A',
+      type: Array.isArray(item.format) ? item.format.join(", ") : item.format || "Album",
+      cover_image: item.cover_image || item.thumb,
+      thumb: item.thumb || item.cover_image,
+      formats: item.format ? [{ name: item.format }] : undefined
+    }));
+
+  console.log('Processed albums:', albums);
+  return NextResponse.json({ results: albums });
 }
