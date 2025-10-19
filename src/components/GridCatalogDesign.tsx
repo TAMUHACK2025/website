@@ -70,7 +70,7 @@ export function GridCatalogDesign() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-xl mb-1">SPOTIFY_TO_PHYSICAL</h1>
+              <h1 className="text-xl mb-1">spotify</h1>
               <p className="text-zinc-500 text-sm">your_digital_library.to_analog()</p>
             </div>
             <Button className="bg-green-500 hover:bg-green-600 text-black">
