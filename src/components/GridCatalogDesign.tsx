@@ -1,3 +1,7 @@
+"use client";
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
@@ -5,6 +9,9 @@ import { Card } from "./ui/card";
 import { Search, ExternalLink, Disc3, CassetteTape, ShoppingCart, Package, DollarSign, Tag, CircleEllipsis, Truck } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerFooter, DrawerTitle, DrawerDescription, DrawerClose } from './ui/drawer'
+import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
+// Use server-side auth route instead of importing server-only helpers
 import { useCallback, useState, useEffect } from "react";
 import { apiClient } from "@/lib/api/client";
 
@@ -43,6 +50,8 @@ interface Album {
 }
 
 export function GridCatalogDesign() {
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Album[]>([]);
   const [featuredAlbums, setFeaturedAlbums] = useState<Album[]>([]);
@@ -113,12 +122,66 @@ export function GridCatalogDesign() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-xl mb-1">resonate</h1>
-              <p className="text-zinc-500 text-sm">what do you want in your hands?</p>
+              <button
+                type="button"
+                className="flex flex-col items-start gap-1 group no-underline text-left"
+                onClick={() => {
+                  // Hard reset the website by forcing a full navigation to root
+                  window.location.assign('/');
+                }}
+              >
+                <h1 className="text-xl mb-0 font-bold cursor-pointer group-hover:underline flex items-center gap-2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                    <path d="M2 12h2M6 8v8M10 6v12M14 8v8M18 10v4M22 12h-2" stroke="#F8FAFC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Resonate
+                </h1>
+                <p className="text-zinc-500 text-sm cursor-pointer">what do you want in your hands?</p>
+              </button>
             </div>
-            <Button className="bg-green-500 hover:bg-green-600 text-black">
-              login with spotify to view your collection
-            </Button>
+
+            <div className="flex items-center gap-3">
+              <Drawer>
+                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                  {/* Popover manages hover tooltip; Drawer manages click-to-open */}
+                  <PopoverTrigger asChild>
+                    <div onMouseEnter={() => setPopoverOpen(true)} onMouseLeave={() => setPopoverOpen(false)}>
+                      <DrawerTrigger asChild>
+                        <Button variant="ghost" className="!bg-transparent p-2">
+                          {/* Spotify logo (green circle with white arcs) */}
+                          <img src="/spotify-logo.svg" alt="Spotify" width={20} height={20} className="block" />
+                        </Button>
+                      </DrawerTrigger>
+                    </div>
+                  </PopoverTrigger>
+
+                  <PopoverContent className="w-auto p-2 bg-zinc-900 text-white rounded-md border border-zinc-700 z-[9999]">
+                    <span className="text-sm">Login in with spotify to view your collection</span>
+                  </PopoverContent>
+                </Popover>
+
+                <DrawerContent className="w-full max-w-sm" >
+                  <DrawerHeader>
+                    <DrawerTitle>Login with Spotify</DrawerTitle>
+                    <DrawerDescription className="text-sm text-zinc-500">Connect your Spotify account to view and import your collection.</DrawerDescription>
+                  </DrawerHeader>
+                  <div className="p-4">
+                    <p className="mb-4 text-sm text-zinc-400">Signing in with Spotify allows us to access your saved albums and match them to Discogs releases.</p>
+                    <a href="/api/auth/login" className="inline-block w-full">
+                      <Button className="w-full bg-green-600 hover:bg-green-700 text-black flex items-center justify-center gap-2">
+                        <img src="/spotify-logo.svg" alt="Spotify" width={18} height={18} className="mr-2" />
+                        Login with Spotify
+                      </Button>
+                    </a>
+                  </div>
+                  <DrawerFooter>
+                    <DrawerClose asChild>
+                      <Button variant="outline" className="w-full">Close</Button>
+                    </DrawerClose>
+                  </DrawerFooter>
+                </DrawerContent>
+              </Drawer>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
@@ -179,7 +242,7 @@ export function GridCatalogDesign() {
                   </div>
                 </div>
                 <div className="p-4">
-                  <h3 className="mb-1 truncate font-medium">{album.title || 'Untitled'}</h3>
+                  <h3 className="mb-1 truncate font-medium text-zinc-500">{album.title || 'Untitled'}</h3>
                   <p className="text-sm text-zinc-500 mb-4 truncate">
                     {/* Show release format and catalog number */}
                     {album.type || 'Unknown format'}
@@ -310,15 +373,15 @@ export function GridCatalogDesign() {
                     {/* Format indicators */}
                     <div className="flex gap-2 mt-2">
                       {album.type?.toLowerCase().includes('vinyl') && (
-                        <Badge variant="secondary" className="bg-zinc-800 flex items-center gap-1">
+                        <Badge variant="secondary" className="bg-zinc-800 flex items-center gap-1 text-white">
                           <Disc3 className="h-3 w-3" />
-                          <span>Vinyl</span>
+                          <span className="text-white">Vinyl</span>
                         </Badge>
                       )}
                       {!album.type?.toLowerCase().includes('digital') && (
-                        <Badge variant="secondary" className="bg-zinc-800 flex items-center gap-1">
+                        <Badge variant="secondary" className="bg-zinc-800 flex items-center gap-1 text-white">
                           <CassetteTape className="h-3 w-3" />
-                          <span>Physical</span>
+                          <span className="text-white">Physical</span>
                         </Badge>
                       )}
                     </div>
