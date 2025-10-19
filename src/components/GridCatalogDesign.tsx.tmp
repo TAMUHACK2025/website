@@ -2,7 +2,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Card } from "./ui/card";
-import { Search, ExternalLink, Disc3, CassetteTape } from "lucide-react";
+import { Search, ExternalLink, Disc3, Disc, CassetteTape } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCallback, useState, useEffect } from "react";
 import { apiClient } from "@/lib/api/client";
@@ -63,7 +63,7 @@ export function GridCatalogDesign() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-xl mb-1">resonate</h1>
+              <h1 className="text-xl mb-1">spotify</h1>
               <p className="text-zinc-500 text-sm">your_digital_library.to_analog()</p>
             </div>
             <Button className="bg-green-500 hover:bg-green-600 text-black">
@@ -73,7 +73,7 @@ export function GridCatalogDesign() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
             <Input 
-              placeholder="search any artist, album, or track" 
+              placeholder="search_albums()" 
               className="bg-zinc-900 border-zinc-800 pl-10 font-mono text-zinc-300 placeholder:text-zinc-600"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -112,8 +112,8 @@ export function GridCatalogDesign() {
               </Card>
             ))
           ) : (
-            (searchResults.length > 0 ? searchResults : featuredAlbums).map((album, idx) => (
-              <Card key={idx} className="bg-zinc-900 border-zinc-800 overflow-hidden hover:border-zinc-700 transition-colors">
+            (searchResults.length > 0 ? searchResults : featuredAlbums).map((album) => (
+              <Card key={album.id} className="bg-zinc-900 border-zinc-800 overflow-hidden hover:border-zinc-700 transition-colors">
                 <div className="aspect-square relative overflow-hidden bg-zinc-800">
                   <ImageWithFallback 
                     src={album.cover_image || album.thumb} 
@@ -129,12 +129,11 @@ export function GridCatalogDesign() {
                 <div className="p-4">
                   <h3 className="mb-1 truncate">{album.title}</h3>
                   <p className="text-sm text-zinc-500 mb-4 truncate">
-                    {/* Show release format and catalog number */}
                     {album.type}
                   </p>
                   
                   <div className="space-y-2">
-                    {/* Show View on Discogs button for all albums */}
+                    {/* View on Discogs button */}
                     <a
                       href={`https://www.discogs.com/release/${album.id}`}
                       target="_blank"

@@ -1,3 +1,19 @@
+# dependencies
 node_modules
-.env.local
+/node_modules
 
+# testing
+/coverage
+
+# production
+/build
+.next/
+.next/cache/
+
+# environment
+.env.local
+*.env.*.local
+
+# misc
+.DS_Store
+.swc/
